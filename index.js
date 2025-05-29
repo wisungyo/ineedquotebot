@@ -9,6 +9,8 @@ const chatId = process.env.TELEGRAM_CHAT_ID;
 
 const bot = new TelegramBot(token, { polling: true });
 
+const availableCommands = ["/todayquote", "/randomquote"];
+
 async function getQuote(type = "today") {
     const date = new Date();
     const day = String(date.getDate()).padStart(2, "0");
@@ -62,7 +64,8 @@ bot.onText(/\/randomquote/, async (msg) => {
 bot.on("message", (msg) => {
     const date = new Date();
     console.log("Message received on", date.toISOString(), "from", msg.from.username || msg.from.id);
-    // message is currently only accepted if it is a command
+    // Ignore messages that are actually available commands
+    if (availableCommands.includes(msg.text)) return;
     bot.sendMessage(
         chatId,
         "Hi there! 👋🏼\nI hope you're having a great day!\n\nUse /todayquote for today's quote,\nor /randomquote for a random quote."
