@@ -59,6 +59,16 @@ bot.onText(/\/randomquote/, async (msg) => {
     }
 });
 
+bot.on("message", (msg) => {
+    const date = new Date();
+    console.log("Message received on", date.toISOString(), "from", msg.from.username || msg.from.id);
+    // message is currently only accepted if it is a command
+    bot.sendMessage(
+        chatId,
+        "Hi there! 👋🏼\nI hope you're having a great day!\n\nUse /todayquote for today's quote,\nor /randomquote for a random quote."
+    );
+});
+
 // Schedule a daily job at 6 AM to send the quote of the day
 cron.schedule("0 6 * * *", async () => {
     try {
