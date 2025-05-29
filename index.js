@@ -1,6 +1,9 @@
+const { quoteOfTheDay, commandInstructions } = require("./constant");
+const quotesFilePath = "./quotes.json";
 const TelegramBot = require("node-telegram-bot-api");
 const axios = require("axios");
 const cron = require("node-cron");
+const fs = require("fs");
 
 require("dotenv").config();
 
@@ -20,28 +23,17 @@ async function getQuote(type = "today") {
     try {
         const response = await axios.get(`${process.env.ZENQUOTES_API_URL}/${type}`);
         const quoteData = response.data[0];
-        return `💭 Quote of the day:\n\n${quoteData.q}\n- ${quoteData.a}\n\n${today}`;
+        return `${quoteOfTheDay}\n\n${quoteData.q}\n- ${quoteData.a}\n\n${today}`;
     } catch (error) {
         console.error("Failed to fetch quote:", error.message);
-        // Return a motivational quote about perseverance when API fails
-        const fallbackQuotes = [
-            "The only failure is giving up.\n- Richard Nixon",
-            "Success is not final, failure is not fatal: It is the courage to continue that counts.\n- Winston Churchill",
-            "Failure is simply the opportunity to begin again, this time more intelligently.\n- Henry Ford",
-            "It's not whether you get knocked down, it's whether you get up.\n- Vince Lombardi",
-            "Our greatest glory is not in never falling, but in rising every time we fall.\n- Confucius",
-            "Success is stumbling from failure to failure with no loss of enthusiasm.\n- Winston Churchill",
-            "Every adversity carries with it the seed of an equal or greater benefit.\n- Napoleon Hill",
-            "The greatest glory in living lies not in never falling, but in rising every time we fall.\n- Nelson Mandela",
-        ];
-        const randomIndex = Math.floor(Math.random() * fallbackQuotes.length);
-        return `💭 Quote during tough times:\n\n${fallbackQuotes[randomIndex]}\n\n${today}`;
+        // Fallback to local quotes if API fails
+        const quotesData = JSON.parse(fs.readFileSync(quotesFilePath));
+        const randomIndex = Math.floor(Math.random() * quotesData.length);
+        return `${quoteOfTheDay}\n\n${quotesData[randomIndex].quoteText}\n- ${quotesData[randomIndex].quoteAuthor}\n\n${today}`;
     }
 }
 
 bot.onText(/\/todayquote/, async (msg) => {
-    const date = new Date();
-    console.log("Today quote command received on", date.toISOString());
     try {
         const quote = await getQuote();
         bot.sendMessage(chatId, quote);
@@ -51,8 +43,6 @@ bot.onText(/\/todayquote/, async (msg) => {
 });
 
 bot.onText(/\/randomquote/, async (msg) => {
-    const date = new Date();
-    console.log("Random quote command received on", date.toISOString());
     try {
         const quote = await getQuote("random");
         bot.sendMessage(chatId, quote);
@@ -66,10 +56,7 @@ bot.on("message", (msg) => {
     console.log("Message received on", date.toISOString(), "from", msg.from.username || msg.from.id);
     // Ignore messages that are actually available commands
     if (availableCommands.includes(msg.text)) return;
-    bot.sendMessage(
-        chatId,
-        "Hi there! 👋🏼\nI hope you're having a great day!\n\nUse /todayquote for today's quote,\nor /randomquote for a random quote."
-    );
+    bot.sendMessage(chatId, commandInstructions);
 });
 
 // Schedule a daily job at 6 AM to send the quote of the day
