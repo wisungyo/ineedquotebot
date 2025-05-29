@@ -15,6 +15,8 @@ const bot = new TelegramBot(token, { polling: true });
 
 const availableCommands = ["/todayquote", "/randomquote"];
 
+let todayQuote = "";
+
 async function getQuote(type = "today") {
     const date = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
     const day = String(date.getDate()).padStart(2, "0");
@@ -36,7 +38,10 @@ async function getQuote(type = "today") {
 
 bot.onText(/\/todayquote/, async (msg) => {
     try {
-        const quote = await getQuote();
+        const quote = todayQuote || (await getQuote());
+        if (!todayQuote) {
+            todayQuote = quote; // Set today's quote if not already set
+        }
         bot.sendMessage(chatId, quote);
     } catch (error) {
         console.error("Error fetching quote:", error);
@@ -64,11 +69,22 @@ bot.on("message", (msg) => {
 cron.schedule("0 6 * * *", async () => {
     try {
         const quote = await getQuote();
+        todayQuote = quote;
         bot.sendMessage(chatId, quote);
     } catch (error) {
         console.error("Error in cron job:", error);
     }
 });
+
+// Set today's quote on startup
+(async () => {
+    try {
+        todayQuote = await getQuote();
+        console.log("Today's quote set:", todayQuote);
+    } catch (error) {
+        console.error("Error setting today's quote on startup:", error);
+    }
+})();
 
 // Start the Express server
 const app = express();
