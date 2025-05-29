@@ -12,7 +12,7 @@ const bot = new TelegramBot(token, { polling: true });
 const availableCommands = ["/todayquote", "/randomquote"];
 
 async function getQuote(type = "today") {
-    const date = new Date();
+    const date = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
