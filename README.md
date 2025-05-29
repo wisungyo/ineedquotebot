@@ -4,7 +4,7 @@ A Telegram bot that delivers daily inspirational quotes and allows users to requ
 
 ## Preview
 
-![I Need Quote Bot Preview](https://raw.githubusercontent.com/wisungyo/ineedquotebot/master/images/ineedquote.jpeg)
+<img src="https://raw.githubusercontent.com/wisungyo/ineedquotebot/master/images/ineedquote.jpeg" alt="I Need Quote Bot Preview" style="max-height: 500px;">
 
 _Screenshot of the bot in action_
 
