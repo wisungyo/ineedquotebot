@@ -1,6 +1,7 @@
 const { quoteOfTheDay, commandInstructions } = require("./constant");
 const quotesFilePath = "./quotes.json";
 const TelegramBot = require("node-telegram-bot-api");
+const express = require("express");
 const axios = require("axios");
 const cron = require("node-cron");
 const fs = require("fs");
@@ -67,4 +68,16 @@ cron.schedule("0 6 * * *", async () => {
     } catch (error) {
         console.error("Error in cron job:", error);
     }
+});
+
+// Start the Express server
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get("/", (req, res) => {
+    res.send("🧠 I Need Quote bot is alive and running.");
+});
+
+app.listen(PORT, () => {
+    console.log(`✅ Web server running on port ${PORT}`);
 });
