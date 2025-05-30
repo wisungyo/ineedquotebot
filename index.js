@@ -42,7 +42,7 @@ bot.onText(/\/todayquote/, async (msg) => {
         if (!todayQuote) {
             todayQuote = quote; // Set today's quote if not already set
         }
-        bot.sendMessage(chatId, quote);
+        bot.sendMessage(msg.chat.id, quote);
     } catch (error) {
         console.error("Error fetching quote:", error);
     }
@@ -51,7 +51,7 @@ bot.onText(/\/todayquote/, async (msg) => {
 bot.onText(/\/randomquote/, async (msg) => {
     try {
         const quote = await getQuote("random");
-        bot.sendMessage(chatId, quote);
+        bot.sendMessage(msg.chat.id, quote);
     } catch (error) {
         console.error("Error fetching quote:", error);
     }
@@ -62,7 +62,7 @@ bot.on("message", (msg) => {
     console.log("Message received on", date.toISOString(), "from", msg.from.username || msg.from.id);
     // Ignore messages that are actually available commands
     if (availableCommands.includes(msg.text)) return;
-    bot.sendMessage(chatId, commandInstructions);
+    bot.sendMessage(msg.chat.id, commandInstructions);
 });
 
 // Schedule a daily job at 6 AM to send the quote of the day
@@ -70,6 +70,7 @@ cron.schedule("0 6 * * *", async () => {
     try {
         const quote = await getQuote();
         todayQuote = quote;
+        // TODO : this will only send to my chat room. need to work on this to broadcast to all users
         bot.sendMessage(chatId, quote);
     } catch (error) {
         console.error("Error in cron job:", error);
