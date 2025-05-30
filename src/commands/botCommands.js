@@ -18,11 +18,9 @@ function initializeCommands(bot) {
      */
     bot.onText(/\/todayquote/, async (msg) => {
         try {
-            const quote = getTodayQuote() || (await getQuote());
-            if (!todayQuote) {
-                setTodayQuote(quote);
-            }
-            bot.sendMessage(msg.chat.id, quote);
+            let todayQuote = getTodayQuote();
+            if (!todayQuote) todayQuote = await setTodayQuote();
+            bot.sendMessage(msg.chat.id, todayQuote);
         } catch (error) {
             console.error("Error fetching quote:", error);
         }
