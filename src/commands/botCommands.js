@@ -20,6 +20,7 @@ function initializeCommands(bot) {
         try {
             let todayQuote = getTodayQuote();
             if (!todayQuote) todayQuote = await setTodayQuote();
+            todayQuote = getTodayQuote();
             bot.sendMessage(msg.chat.id, todayQuote);
         } catch (error) {
             console.error("Error fetching quote:", error);
