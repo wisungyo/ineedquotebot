@@ -1,5 +1,5 @@
-const { quoteOfTheDay } = require("../../constant");
-const quotesFilePath = "./quotes.json";
+const { quoteOfTheDay } = require("../constants/copytexts");
+const quotesFilePath = "../constants/quotes.json";
 const axios = require("axios");
 const fs = require("fs");
 

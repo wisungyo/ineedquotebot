@@ -1,5 +1,5 @@
 const { getQuote, getTodayQuote } = require("../services/quoteService");
-const { commandInstructions } = require("../../constant");
+const { commandInstructions } = require("../constants/copytexts");
 
 /**
  * Initialize the bot with command handlers
