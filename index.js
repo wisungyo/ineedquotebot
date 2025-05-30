@@ -1,8 +1,8 @@
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
 
-const { initializeCommands, initScheduledQuotes } = require("./src/commands/botCommands");
-const { initializeServer } = require("./src/services/serverService");
+const { initializeServer, initScheduledQuotes } = require("./src/services/serverService");
+const { initializeCommands } = require("./src/commands/botCommands");
 const { setTodayQuote } = require("./src/services/quoteService");
 
 const token = process.env.TELEGRAM_TOKEN;

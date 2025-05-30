@@ -1,4 +1,4 @@
-const { getQuote, getTodayQuote, setTodayQuote } = require("../services/quoteService");
+const { getQuote, getTodayQuote } = require("../services/quoteService");
 const { commandInstructions } = require("../../constant");
 
 /**
@@ -50,28 +50,6 @@ function initializeCommands(bot) {
     });
 }
 
-/**
- * Initialize scheduled quote sending
- * @param {Object} bot - Telegram bot instance
- * @param {String} chatId - Default chat ID for broadcasting
- */
-function initScheduledQuotes(bot, chatId) {
-    const cron = require("node-cron");
-
-    // @cron : every day at 6 am
-    cron.schedule("0 6 * * *", async () => {
-        try {
-            const quote = await getQuote();
-            todayQuote = quote;
-            // TODO : this will only send to my chat room. need to work on this to broadcast to all users
-            bot.sendMessage(chatId, quote);
-        } catch (error) {
-            console.error("Error in cron job:", error);
-        }
-    });
-}
-
 module.exports = {
     initializeCommands,
-    initScheduledQuotes,
 };
