@@ -1,10 +1,10 @@
 # I Need Quote Bot 🧠💭
 
-A Telegram bot that delivers daily inspirational quotes and allows users to request quotes on demand. Keep motivated with a fresh quote every day or get a random quote whenever you need inspiration!
+A Telegram bot that delivers daily inspirational quotes and allows users to request quotes on demand. Keep motivated with a fresh quote every day or get a random quote whenever you need inspiration! Find the bot on Telegram @ineedquotebot.
 
 ## Preview
 
-<img src="https://raw.githubusercontent.com/wisungyo/ineedquotebot/master/images/ineedquote.jpeg" alt="I Need Quote Bot Preview" style="max-height: 500px;">
+<img src="https://raw.githubusercontent.com/wisungyo/ineedquotebot/master/images/ineedquote.jpeg" alt="I Need Quote Bot Preview" style="height: 1000px;">
 
 _Screenshot of the bot in action_
 
