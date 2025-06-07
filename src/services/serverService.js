@@ -1,3 +1,4 @@
+const { initializeConnection } = require("./dbService");
 const express = require("express");
 
 /**
@@ -7,6 +8,10 @@ const express = require("express");
  */
 function initializeServer(port = process.env.PORT || 3000) {
     const app = express();
+
+    initializeConnection().catch((err) => {
+        console.error("Database initialization error:", err);
+    });
 
     app.get("/", (req, res) => {
         res.send("🧠 I Need Quote bot is alive and running.");
