@@ -23,7 +23,7 @@ function initializeCommands(bot) {
      *         unless the bot is restarted or the quote is manually updated.
      *         It is designed to provide a consistent quote for the day.
      */
-    bot.onText(new RegExp(`/${todayQuote}`), async (msg) => {
+    bot.onText(new RegExp(`${todayQuote}`), async (msg) => {
         try {
             let todayQuote = await getTodayQuote();
             bot.sendMessage(msg.chat.id, todayQuote);
@@ -36,7 +36,7 @@ function initializeCommands(bot) {
      * @command : /randomquote
      * @description : Generate a random quote
      */
-    bot.onText(new RegExp(`/${randomQuote}`), async (msg) => {
+    bot.onText(new RegExp(`${randomQuote}`), async (msg) => {
         try {
             const quote = await getQuote("random");
             bot.sendMessage(msg.chat.id, quote);
@@ -49,7 +49,7 @@ function initializeCommands(bot) {
      * @command : /subscribe
      * @description : Subscribe to daily quotes
      */
-    bot.onText(new RegExp(`/${subscribeCommand}`), async (msg) => {
+    bot.onText(new RegExp(`${subscribeCommand}`), async (msg) => {
         try {
             const chatId = msg.chat.id;
 
@@ -75,7 +75,7 @@ function initializeCommands(bot) {
      * @command : /unsubscribe
      * @description : Unsubscribe from daily quotes
      */
-    bot.onText(new RegExp(`/${unsubscribeCommand}`), async (msg) => {
+    bot.onText(new RegExp(`${unsubscribeCommand}`), async (msg) => {
         try {
             const chatId = msg.chat.id;
 

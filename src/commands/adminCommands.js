@@ -18,7 +18,7 @@ function initializeAdminCommands(bot, adminChatId) {
      * @description : Get subscriber statistics
      * @admin : Only accessible by admin
      */
-    bot.onText(new RegExp(`^/${stats}$`), async (msg) => {
+    bot.onText(new RegExp(`^${stats}$`), async (msg) => {
         if (msg.chat.id.toString() !== adminChatId.toString()) {
             return;
         }
@@ -48,7 +48,7 @@ function initializeAdminCommands(bot, adminChatId) {
      * @admin : Only accessible by admin
      * @usage : /broadcast Your message here
      */
-    bot.onText(new RegExp(`^/${broadcast} (.+)$`), async (msg, match) => {
+    bot.onText(new RegExp(`^${broadcast} (.+)$`), async (msg, match) => {
         if (msg.chat.id.toString() !== adminChatId.toString()) {
             return;
         }
@@ -82,7 +82,7 @@ function initializeAdminCommands(bot, adminChatId) {
      * @command : /broadcast
      * @description : Handle case when /broadcast is sent without a message
      */
-    bot.onText(new RegExp(`^/${broadcast}$`), (msg) => {
+    bot.onText(new RegExp(`^${broadcast}$`), (msg) => {
         if (msg.chat.id.toString() !== adminChatId.toString()) {
             return;
         }
