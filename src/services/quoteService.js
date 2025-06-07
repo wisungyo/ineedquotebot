@@ -1,6 +1,8 @@
+const { getAllSubscribers } = require("./dbService");
 const { quoteOfTheDay } = require("../constants/copytexts");
 const quotesFilePath = "./src/constants/quotes.json";
 const axios = require("axios");
+const cron = require("node-cron");
 const fs = require("fs");
 
 /**
@@ -38,15 +40,23 @@ async function getQuote(type = "today") {
  * @param {String} chatId - Default chat ID for broadcasting
  */
 function initScheduledQuotes(bot, chatId) {
-    const cron = require("node-cron");
-
-    // @cron : every day at 6 am
-    cron.schedule("0 6 * * *", async () => {
+    cron.schedule(process.env.CRON_DAILY_QUOTE, async () => {
         try {
             const quote = await getQuote();
             todayQuote = quote;
-            // TODO : this will only send to my chat room. need to work on this to broadcast to all users
-            bot.sendMessage(chatId, quote);
+
+            const subscribers = await getAllSubscribers();
+
+            if (subscribers && subscribers.length > 0) {
+                console.log(`Broadcasting quote to ${subscribers.length} subscribers`);
+                for (const subscriberChatId of subscribers) {
+                    try {
+                        await bot.sendMessage(subscriberChatId, quote);
+                    } catch (sendError) {
+                        console.error(`Failed to send message to chat ID ${subscriberChatId}:`, sendError.message);
+                    }
+                }
+            }
         } catch (error) {
             console.error("Error in cron job:", error);
         }
