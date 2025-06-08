@@ -40,27 +40,34 @@ async function getQuote(type = "today") {
  * @param {String} chatId - Default chat ID for broadcasting
  */
 function initScheduledQuotes(bot, chatId) {
-    cron.schedule(process.env.CRON_DAILY_QUOTE, async () => {
-        try {
-            const quote = await getQuote();
-            todayQuote = quote;
+    cron.schedule(
+        process.env.CRON_DAILY_QUOTE,
+        async () => {
+            try {
+                const quote = await getQuote();
+                todayQuote = quote;
 
-            const subscribers = await getAllSubscribers();
+                const subscribers = await getAllSubscribers();
 
-            if (subscribers && subscribers.length > 0) {
-                console.log(`Broadcasting quote to ${subscribers.length} subscribers`);
-                for (const subscriberChatId of subscribers) {
-                    try {
-                        await bot.sendMessage(subscriberChatId, quote);
-                    } catch (sendError) {
-                        console.error(`Failed to send message to chat ID ${subscriberChatId}:`, sendError.message);
+                if (subscribers && subscribers.length > 0) {
+                    console.log(`Broadcasting quote to ${subscribers.length} subscribers`);
+                    for (const subscriberChatId of subscribers) {
+                        try {
+                            await bot.sendMessage(subscriberChatId, quote);
+                        } catch (sendError) {
+                            console.error(`Failed to send message to chat ID ${subscriberChatId}:`, sendError.message);
+                        }
                     }
                 }
+            } catch (error) {
+                console.error("Error in cron job:", error);
             }
-        } catch (error) {
-            console.error("Error in cron job:", error);
+        },
+        {
+            scheduled: true,
+            timezone: "Asia/Jakarta",
         }
-    });
+    );
 }
 
 async function setTodayQuote() {
