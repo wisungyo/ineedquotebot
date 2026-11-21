@@ -1,7 +1,6 @@
 const fs = require("fs");
 const path = require("path");
 const { getTodayQuote, formatQuoteBody, quoteKeyboard } = require("./quoteService");
-const { getCard } = require("./dbService");
 const { BOT_USERNAME } = require("../constants/commands");
 
 const MAX_RESULTS = 20;
@@ -87,33 +86,6 @@ function initializeInlineMode(bot) {
     bot.on("inline_query", async (inlineQuery) => {
         try {
             const query = inlineQuery.query || "";
-
-            // "card_<id>": sharing a quote card image (from the card's share button)
-            const cardMatch = query.trim().match(/^card_(\d+)$/);
-            if (cardMatch) {
-                const card = await getCard(Number(cardMatch[1]));
-                const results =
-                    card && card.file_id
-                        ? [
-                              {
-                                  type: "photo",
-                                  id: `card-${card.id}`,
-                                  photo_file_id: card.file_id,
-                                  title: "Quote card",
-                                  description: `“${card.quote_text}” — ${card.author}`.slice(0, 120),
-                                  caption: `“${card.quote_text}” — ${card.author}\n\n☀️ Daily quotes: @${BOT_USERNAME}`.slice(0, 1024),
-                                  reply_markup: {
-                                      inline_keyboard: [
-                                          [{ text: "☀️ Get a quote every morning", url: `https://t.me/${BOT_USERNAME}?start=card` }],
-                                      ],
-                                  },
-                              },
-                          ]
-                        : [];
-                await bot.answerInlineQuery(inlineQuery.id, results, { cache_time: 3600, is_personal: false });
-                return;
-            }
-
             const results = [];
 
             if (!query.trim()) {

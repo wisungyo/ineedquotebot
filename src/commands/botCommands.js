@@ -15,17 +15,10 @@ const {
     welcomeGroup,
     startTips,
 } = require("../constants/copytexts");
-const {
-    subscribe,
-    unsubscribe,
-    isSubscribed,
-    migrateChatId,
-    getOrCreateCard,
-    setCardFileId,
-} = require("../services/dbService");
+const { subscribe, unsubscribe, isSubscribed, migrateChatId } = require("../services/dbService");
 const { getQuote, getTodayQuote, sendQuote, escapeHtml, quoteFromMessage } = require("../services/quoteService");
-const { renderQuoteCard, styleForDate } = require("../services/cardService");
-const { cardShareKeyboard, cardCaption } = require("../utils/share");
+const { renderQuoteCard } = require("../services/cardService");
+const { BOT_USERNAME } = require("../constants/commands");
 const { notifyAdminSubscription } = require("../utils/adminNotify");
 
 const isGroup = (chat) => chat && (chat.type === "group" || chat.type === "supergroup");
@@ -159,19 +152,16 @@ function initializeCommands(bot) {
                 }
                 await bot.answerCallbackQuery(query.id, { text: "🖼 Making your image…" });
                 bot.sendChatAction(chat.id, "upload_photo").catch(() => {});
-
-                const style = styleForDate();
-                const card = await getOrCreateCard(quote, style);
-                const options = {
-                    caption: cardCaption,
-                    reply_markup: card ? cardShareKeyboard(quote, card.id) : undefined,
-                };
-                // Reuse the already-uploaded image when we have it
-                const photo = card && card.file_id ? card.file_id : renderQuoteCard(quote, style);
-                const sent = await bot.sendPhoto(chat.id, photo, options, { filename: "quote.png", contentType: "image/png" });
-                if (card && !card.file_id && sent.photo && sent.photo.length) {
-                    await setCardFileId(card.id, sent.photo[sent.photo.length - 1].file_id);
-                }
+                const png = renderQuoteCard(quote);
+                await bot.sendPhoto(
+                    chat.id,
+                    png,
+                    {
+                        caption: `Save it, post it, share it ✨\nMore quotes: @${BOT_USERNAME}`,
+                        reply_markup: { inline_keyboard: [[{ text: "🎲 Another one", callback_data: "quote:random" }]] },
+                    },
+                    { filename: "quote.png", contentType: "image/png" }
+                );
                 return;
             }
 
