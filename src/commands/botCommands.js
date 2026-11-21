@@ -7,7 +7,7 @@ const {
 } = require("../constants/commands");
 const { commandInstructions, commandInstructionsAdmin, subscriptionTexts } = require("../constants/copytexts");
 const { subscribe, unsubscribe, isSubscribed } = require("../services/dbService");
-const { getQuote, getTodayQuote } = require("../services/quoteService");
+const { getQuote, getTodayQuote, sendQuote } = require("../services/quoteService");
 
 /**
  * Initialize the bot with command handlers
@@ -24,8 +24,8 @@ function initializeCommands(bot) {
      */
     bot.onText(new RegExp(`${todayQuote}`), async (msg) => {
         try {
-            let todayQuote = await getTodayQuote();
-            bot.sendMessage(msg.chat.id, todayQuote);
+            const quote = await getTodayQuote();
+            await sendQuote(bot, msg.chat.id, quote, { kind: "today" });
         } catch (error) {
             console.error("Error fetching quote:", error);
         }
@@ -38,9 +38,24 @@ function initializeCommands(bot) {
     bot.onText(new RegExp(`${randomQuote}`), async (msg) => {
         try {
             const quote = await getQuote("random");
-            bot.sendMessage(msg.chat.id, quote);
+            await sendQuote(bot, msg.chat.id, quote, { kind: "random" });
         } catch (error) {
             console.error("Error fetching quote:", error);
+        }
+    });
+
+    /**
+     * @button : 🎲 Another one
+     * @description : Inline button under a quote, sends a new random quote
+     */
+    bot.on("callback_query", async (query) => {
+        if (query.data !== "quote:random") return;
+        try {
+            await bot.answerCallbackQuery(query.id);
+            const quote = await getQuote("random");
+            await sendQuote(bot, query.message.chat.id, quote, { kind: "random" });
+        } catch (error) {
+            console.error("Error handling 'another one' button:", error.message);
         }
     });
 

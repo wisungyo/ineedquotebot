@@ -102,6 +102,22 @@ async function getAllSubscribers() {
 }
 
 /**
+ * Get all active subscribers with their names (for personalised messages)
+ * @returns {Promise<Array<{chat_id: String, first_name: String|null, username: String|null}>>}
+ */
+async function getActiveSubscribers() {
+    try {
+        const { rows } = await pool.query(
+            `SELECT chat_id, first_name, username FROM subscribers WHERE subscribed = TRUE ORDER BY id`
+        );
+        return rows;
+    } catch (error) {
+        console.error("Error getting active subscribers:", error.message);
+        return [];
+    }
+}
+
+/**
  * Check if a chat ID is subscribed
  * @param {Number} chatId - The chat ID to check
  * @returns {Promise<Boolean>}
@@ -124,5 +140,6 @@ module.exports = {
     subscribe,
     unsubscribe,
     getAllSubscribers,
+    getActiveSubscribers,
     isSubscribed,
 };
