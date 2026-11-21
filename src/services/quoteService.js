@@ -102,6 +102,7 @@ function quoteKeyboard(quote, { subscribeButton = false } = {}) {
     const rows = [
         [
             { text: "🎲 Another one", callback_data: "quote:random" },
+            { text: "🖼 Image", callback_data: "quote:card" },
             { text: "📤 Share", url: shareUrl },
         ],
     ];
@@ -109,6 +110,17 @@ function quoteKeyboard(quote, { subscribeButton = false } = {}) {
         rows.push([{ text: "☀️ Send me one every morning", callback_data: "sub:daily" }]);
     }
     return { inline_keyboard: rows };
+}
+
+/**
+ * Recover { text, author } from a quote message we sent earlier
+ * (the rendered text contains “quote” followed by "— author").
+ * @param {String} messageText - plain text of the Telegram message
+ * @returns {Object|null}
+ */
+function quoteFromMessage(messageText = "") {
+    const m = messageText.match(/“([\s\S]+)”\s*\n+\s*— ([^\n]+)/);
+    return m ? { text: m[1].trim(), author: m[2].trim() } : null;
 }
 
 /**
@@ -202,6 +214,7 @@ module.exports = {
     initScheduledQuotes,
     formatQuote,
     formatQuoteBody,
+    quoteFromMessage,
     sendQuote,
     quoteKeyboard,
     escapeHtml,

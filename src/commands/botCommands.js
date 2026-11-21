@@ -16,7 +16,9 @@ const {
     startTips,
 } = require("../constants/copytexts");
 const { subscribe, unsubscribe, isSubscribed, migrateChatId } = require("../services/dbService");
-const { getQuote, getTodayQuote, sendQuote, escapeHtml } = require("../services/quoteService");
+const { getQuote, getTodayQuote, sendQuote, escapeHtml, quoteFromMessage } = require("../services/quoteService");
+const { renderQuoteCard } = require("../services/cardService");
+const { BOT_USERNAME } = require("../constants/commands");
 const { notifyAdminSubscription } = require("../utils/adminNotify");
 
 const isGroup = (chat) => chat && (chat.type === "group" || chat.type === "supergroup");
@@ -128,6 +130,7 @@ function initializeCommands(bot) {
     /**
      * @buttons : inline buttons under quote messages
      *   quote:random -> 🎲 Another one
+     *   quote:card   -> 🖼 Image (quote card PNG)
      *   sub:daily    -> ☀️ Send me one every morning
      */
     bot.on("callback_query", async (query) => {
@@ -138,6 +141,27 @@ function initializeCommands(bot) {
                 await bot.answerCallbackQuery(query.id);
                 const quote = await getQuote("random");
                 await sendQuote(bot, chat.id, quote, { kind: "random" });
+                return;
+            }
+
+            if (query.data === "quote:card") {
+                const quote = quoteFromMessage(query.message.text || query.message.caption || "");
+                if (!quote) {
+                    await bot.answerCallbackQuery(query.id, { text: "Couldn't read this quote 😕" });
+                    return;
+                }
+                await bot.answerCallbackQuery(query.id, { text: "🖼 Making your image…" });
+                bot.sendChatAction(chat.id, "upload_photo").catch(() => {});
+                const png = renderQuoteCard(quote);
+                await bot.sendPhoto(
+                    chat.id,
+                    png,
+                    {
+                        caption: `Save it, post it, share it ✨\nMore quotes: @${BOT_USERNAME}`,
+                        reply_markup: { inline_keyboard: [[{ text: "🎲 Another one", callback_data: "quote:random" }]] },
+                    },
+                    { filename: "quote.png", contentType: "image/png" }
+                );
                 return;
             }
 

@@ -27,6 +27,10 @@ _Screenshot of the bot in action_
 -   `/subscribe` - Subscribe to receive daily quotes (6 AM WIB)
 -   `/unsubscribe` - Unsubscribe from daily quotes
 
+### Quote Cards
+
+Every quote message has a "🖼 Image" button that renders the quote as a 1080×1350 PNG card, ready for Instagram/WhatsApp status. Three styles (Classic, Sunrise, Midnight) rotate daily. Cards are drawn from fixed templates with `@napi-rs/canvas` and the bundled open-source fonts in `assets/fonts` (Inter, EB Garamond, SIL OFL 1.1); no AI or image generation is involved.
+
 ### Inline Mode
 
 Type `@ineedquotebot` in any chat to pick a quote and send it to a friend, or `@ineedquotebot love` to search by text/author. Requires inline mode enabled in @BotFather (`/setinline`).
