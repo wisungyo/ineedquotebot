@@ -28,6 +28,18 @@ async function initializeConnection() {
         // v2: groups support
         await pool.query(`ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS chat_type TEXT NOT NULL DEFAULT 'private'`);
         await pool.query(`ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS chat_title TEXT`);
+        // v3: rendered quote cards (Telegram file_id cache, used for sharing)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS quote_cards (
+                id          SERIAL PRIMARY KEY,
+                quote_text  TEXT NOT NULL,
+                author      TEXT NOT NULL,
+                style       TEXT NOT NULL,
+                file_id     TEXT,
+                created_at  TIMESTAMPTZ DEFAULT NOW(),
+                UNIQUE (quote_text, author, style)
+            )
+        `);
         await pool.query("SELECT 1 FROM subscribers LIMIT 1");
         console.log("✅ Successfully connected to PostgreSQL database");
     } catch (error) {
@@ -164,9 +176,56 @@ async function migrateChatId(oldChatId, newChatId) {
     }
 }
 
+/**
+ * Get or create the card row for a quote + style
+ * @returns {Promise<{id: Number, file_id: String|null}|null>}
+ */
+async function getOrCreateCard(quote, style) {
+    try {
+        const { rows } = await pool.query(
+            `INSERT INTO quote_cards (quote_text, author, style) VALUES ($1, $2, $3)
+             ON CONFLICT (quote_text, author, style) DO UPDATE SET style = EXCLUDED.style
+             RETURNING id, file_id`,
+            [quote.text, quote.author, style]
+        );
+        return rows[0] || null;
+    } catch (error) {
+        console.error("Error creating card:", error.message);
+        return null;
+    }
+}
+
+/**
+ * Save the Telegram file_id of a rendered card
+ */
+async function setCardFileId(id, fileId) {
+    try {
+        await pool.query(`UPDATE quote_cards SET file_id = $2 WHERE id = $1`, [id, fileId]);
+    } catch (error) {
+        console.error("Error saving card file_id:", error.message);
+    }
+}
+
+/**
+ * Get a card by id
+ * @returns {Promise<{id, quote_text, author, style, file_id}|null>}
+ */
+async function getCard(id) {
+    try {
+        const { rows } = await pool.query(`SELECT * FROM quote_cards WHERE id = $1`, [id]);
+        return rows[0] || null;
+    } catch (error) {
+        console.error("Error getting card:", error.message);
+        return null;
+    }
+}
+
 module.exports = {
     initializeConnection,
     migrateChatId,
+    getOrCreateCard,
+    setCardFileId,
+    getCard,
     subscribe,
     unsubscribe,
     getAllSubscribers,
