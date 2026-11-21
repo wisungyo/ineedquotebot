@@ -1,4 +1,5 @@
 const { getActiveSubscribers } = require("./dbService");
+const { handleDeliveryFailure } = require("../utils/deliveryFailure");
 const quotesFilePath = "./src/constants/quotes.json";
 const axios = require("axios");
 const cron = require("node-cron");
@@ -145,7 +146,7 @@ function initScheduledQuotes(bot) {
                                 name: subscriber.first_name || subscriber.username,
                             });
                         } catch (sendError) {
-                            console.error(`Failed to send message to chat ID ${subscriber.chat_id}:`, sendError.message);
+                            await handleDeliveryFailure(bot, subscriber.chat_id, sendError);
                         }
                         await new Promise((resolve) => setTimeout(resolve, 50));
                     }

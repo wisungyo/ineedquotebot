@@ -1,4 +1,5 @@
 const { getAllSubscribers } = require("../services/dbService");
+const { handleDeliveryFailure } = require("./deliveryFailure");
 
 /**
  * Broadcast a message to all subscribers
@@ -23,6 +24,7 @@ async function broadcastToSubscribers(bot, message) {
 
         let sentCount = 0;
         let failedCount = 0;
+        let removedCount = 0;
         const failedChats = [];
 
         for (const chatId of subscribers) {
@@ -30,13 +32,16 @@ async function broadcastToSubscribers(bot, message) {
                 await bot.sendMessage(chatId, message);
                 sentCount++;
             } catch (error) {
-                console.error(`Failed to send message to chat ID ${chatId}:`, error.message);
                 failedCount++;
+                const removed = await handleDeliveryFailure(bot, chatId, error);
+                if (removed) removedCount++;
                 failedChats.push({
                     chatId,
                     error: error.message,
+                    removed,
                 });
             }
+            await new Promise((resolve) => setTimeout(resolve, 50));
         }
 
         return {
@@ -44,6 +49,7 @@ async function broadcastToSubscribers(bot, message) {
             message: `Broadcast complete. Sent to ${sentCount} subscribers. Failed: ${failedCount}`,
             sentCount,
             failedCount,
+            removedCount,
             totalSubscribers: subscribers.length,
             failedChats,
         };

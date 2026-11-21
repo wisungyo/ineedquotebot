@@ -66,7 +66,8 @@ function initializeAdminCommands(bot, adminChatId) {
                     `✅ Broadcast complete!\n\n` +
                     `Total subscribers: ${result.totalSubscribers}\n` +
                     `Successfully sent: ${result.sentCount}\n` +
-                    `Failed: ${result.failedCount}`;
+                    `Failed: ${result.failedCount}` +
+                    (result.removedCount ? `\nAuto-unsubscribed (blocked/deleted): ${result.removedCount}` : "");
             } else {
                 responseMessage = `❌ Broadcast failed: ${result.message}`;
             }

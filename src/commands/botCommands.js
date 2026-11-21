@@ -8,6 +8,7 @@ const {
 const { commandInstructions, commandInstructionsAdmin, subscriptionTexts } = require("../constants/copytexts");
 const { subscribe, unsubscribe, isSubscribed } = require("../services/dbService");
 const { getQuote, getTodayQuote, sendQuote } = require("../services/quoteService");
+const { notifyAdminSubscription } = require("../utils/adminNotify");
 
 /**
  * Initialize the bot with command handlers
@@ -76,6 +77,7 @@ function initializeCommands(bot) {
             const result = await subscribe(msg.from, chatId);
             if (result) {
                 bot.sendMessage(chatId, subscriptionTexts.subscribed);
+                notifyAdminSubscription(bot, "subscribe", msg);
             } else {
                 bot.sendMessage(chatId, subscriptionTexts.error);
             }
@@ -102,6 +104,7 @@ function initializeCommands(bot) {
             const result = await unsubscribe(chatId);
             if (result) {
                 bot.sendMessage(chatId, subscriptionTexts.unsubscribed);
+                notifyAdminSubscription(bot, "unsubscribe", msg);
             } else {
                 bot.sendMessage(chatId, subscriptionTexts.error);
             }
