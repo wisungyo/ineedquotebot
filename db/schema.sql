@@ -9,3 +9,7 @@ CREATE TABLE IF NOT EXISTS subscribers (
     unsubscribed_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_subscribers_subscribed ON subscribers (subscribed);
+
+-- v2: groups support
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS chat_type TEXT NOT NULL DEFAULT 'private';
+ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS chat_title TEXT;

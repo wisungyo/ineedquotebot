@@ -21,10 +21,19 @@ _Screenshot of the bot in action_
 
 ### User Commands
 
+-   `/start` - Welcome message, today's quote and a one-tap "send me one every morning" button
 -   `/todayquote` - Get the quote of the day
 -   `/randomquote` - Get a random inspirational quote
--   `/subscribe` - Subscribe to receive daily quotes
+-   `/subscribe` - Subscribe to receive daily quotes (6 AM WIB)
 -   `/unsubscribe` - Unsubscribe from daily quotes
+
+### Inline Mode
+
+Type `@ineedquotebot` in any chat to pick a quote and send it to a friend, or `@ineedquotebot love` to search by text/author. Requires inline mode enabled in @BotFather (`/setinline`).
+
+### Groups
+
+Add the bot to a group: it greets the group with today's quote and a subscribe button. Group admins can `/subscribe` or `/unsubscribe` the group; the daily quote is then posted there every morning. Removing the bot from the group unsubscribes it automatically.
 
 ### Admin Commands
 

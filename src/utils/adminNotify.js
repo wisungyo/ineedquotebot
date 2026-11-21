@@ -24,7 +24,16 @@ async function notifyAdminSubscription(bot, event, msg) {
         const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || "Unknown";
         const username = user.username ? `@${escapeHtml(user.username)}` : "<i>no username</i>";
         const subscribers = await getAllSubscribers();
-        const header = event === "subscribe" ? "🟢 <b>New subscriber</b>" : "🔴 <b>Unsubscribed</b>";
+        const chat = msg.chat || {};
+        const isGroupChat = chat.type === "group" || chat.type === "supergroup";
+        const header =
+            event === "subscribe"
+                ? isGroupChat
+                    ? "🟢 <b>New group subscriber</b>"
+                    : "🟢 <b>New subscriber</b>"
+                : isGroupChat
+                ? "🔴 <b>Group unsubscribed</b>"
+                : "🔴 <b>Unsubscribed</b>";
         const time = new Date().toLocaleString("en-GB", {
             timeZone: "Asia/Jakarta",
             day: "numeric",
@@ -36,6 +45,7 @@ async function notifyAdminSubscription(bot, event, msg) {
 
         const text =
             `${header}\n\n` +
+            (isGroupChat ? `👥 ${escapeHtml(chat.title || "Untitled group")}\n` : "") +
             `👤 ${escapeHtml(fullName)} (${username})\n` +
             `🆔 <code>${msg.chat.id}</code>\n` +
             `🕒 ${time} WIB\n\n` +

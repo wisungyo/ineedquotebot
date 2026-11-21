@@ -94,19 +94,30 @@ function formatQuote(quote, { kind = "today", name } = {}) {
  * Inline keyboard shown under every quote
  * @param {Object} quote - from getQuote()
  */
-function quoteKeyboard(quote) {
+function quoteKeyboard(quote, { subscribeButton = false } = {}) {
     const shareText = `“${quote.text}” — ${quote.author}\n\nGet a daily quote from @${BOT_USERNAME}`;
     const shareUrl =
         `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${BOT_USERNAME}`)}` +
         `&text=${encodeURIComponent(shareText)}`;
-    return {
-        inline_keyboard: [
-            [
-                { text: "🎲 Another one", callback_data: "quote:random" },
-                { text: "📤 Share", url: shareUrl },
-            ],
+    const rows = [
+        [
+            { text: "🎲 Another one", callback_data: "quote:random" },
+            { text: "📤 Share", url: shareUrl },
         ],
-    };
+    ];
+    if (subscribeButton) {
+        rows.push([{ text: "☀️ Send me one every morning", callback_data: "sub:daily" }]);
+    }
+    return { inline_keyboard: rows };
+}
+
+/**
+ * Compact quote body used for inline-mode results (no header/date)
+ * @param {Object} quote - { text, author }
+ * @returns {String} HTML
+ */
+function formatQuoteBody(quote) {
+    return `<blockquote>“${escapeHtml(quote.text)}”\n\n— <b>${escapeHtml(quote.author)}</b></blockquote>`;
 }
 
 /**
@@ -120,7 +131,7 @@ function sendQuote(bot, chatId, quote, formatOptions = {}) {
     return bot.sendMessage(chatId, formatQuote(quote, formatOptions), {
         parse_mode: "HTML",
         disable_web_page_preview: true,
-        reply_markup: quoteKeyboard(quote),
+        reply_markup: quoteKeyboard(quote, { subscribeButton: !!formatOptions.subscribeButton }),
     });
 }
 
@@ -143,7 +154,10 @@ function initScheduledQuotes(bot) {
                         try {
                             await sendQuote(bot, subscriber.chat_id, quote, {
                                 kind: "daily",
-                                name: subscriber.first_name || subscriber.username,
+                                name:
+                                    subscriber.chat_type === "private"
+                                        ? subscriber.first_name || subscriber.username
+                                        : subscriber.chat_title,
                             });
                         } catch (sendError) {
                             await handleDeliveryFailure(bot, subscriber.chat_id, sendError);
@@ -187,5 +201,8 @@ module.exports = {
     getTodayQuote,
     initScheduledQuotes,
     formatQuote,
+    formatQuoteBody,
     sendQuote,
+    quoteKeyboard,
+    escapeHtml,
 };
