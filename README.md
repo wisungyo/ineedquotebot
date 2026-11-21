@@ -35,14 +35,15 @@ _Screenshot of the bot in action_
 
 -   Node.js
 -   Express.js
--   PostgreSQL (on Render)
+-   PostgreSQL (self-hosted, via `pg`)
 -   Telegram Bot API
 -   ZenQuotes API
 -   Node-cron for scheduling
 
 ## Requirements
 
--   Node.js (v14 or higher recommended)
+-   Node.js (v18 or higher recommended)
+-   PostgreSQL
 -   Telegram Bot Token (Get it from [BotFather](https://t.me/botfather))
 -   Environment variables set up
 
@@ -52,7 +53,7 @@ _Screenshot of the bot in action_
 
 ```bash
 git clone <repository-url>
-cd letsgo
+cd ineedquotebot
 ```
 
 2. **Install dependencies**
@@ -61,21 +62,22 @@ cd letsgo
 npm install
 ```
 
-3. **Create a .env file with the following variables**
+3. **Create a .env file** (copy from `.env.example`)
 
 ```
-TELEGRAM_TOKEN=your_telegram_bot_token
-TELEGRAM_CHAT_ID=your_telegram_chat_id
-ADMIN_CHAT_ID=your_admin_chat_id
+TL_TOKEN=your_telegram_bot_token
+TL_ADMIN_CHAT_ID=your_admin_chat_id
 ZENQUOTES_API_URL=https://zenquotes.io/api
-DATABASE_URL=postgres://username:password@host:port/database_name
+DATABASE_URL=postgres://user:password@127.0.0.1:5432/ineedquotebot
 PORT=3000
+HOST=127.0.0.1
+CRON_DAILY_QUOTE=0 6 * * *
 ```
 
-4. **Initialize the database**
+4. **Initialize the database** (optional; the app also creates the table on startup)
 
 ```bash
-npm run migrate
+psql "$DATABASE_URL" -f db/schema.sql
 ```
 
 5. **Start the application**
@@ -99,27 +101,46 @@ If the external API fails, the bot falls back to its local database of quotes st
 
 ## Deployment
 
-The bot includes a simple Express server, making it ready for deployment on platforms like Render.
+The bot uses long polling, so it needs no domain, SSL, or open port. The Express health endpoint binds to `127.0.0.1` by default (set `HOST=0.0.0.0` to expose it).
 
-### Setting Up a PostgreSQL Database on Render
+### Self-hosted on a VPS (systemd + local PostgreSQL)
 
-1. Create a new PostgreSQL database service on Render
-2. Copy the internal connection URL provided by Render
-3. Add this URL as `DATABASE_URL` in your environment variables
-4. Run the migration script to set up the database schema:
+1. Install PostgreSQL and create a database and user:
 
 ```bash
-npm run migrate
+sudo apt install -y postgresql
+sudo -u postgres psql -c "CREATE ROLE quotebot LOGIN PASSWORD 'change-me';"
+sudo -u postgres psql -c "CREATE DATABASE ineedquotebot OWNER quotebot;"
 ```
 
-### For a Complete Render Deployment:
+2. `npm ci --omit=dev`, fill in `.env`, then create `/etc/systemd/system/ineedquotebot.service`:
 
-1. Create a web service pointing to your repository
-2. Set all necessary environment variables
-3. Include the following commands in your Render dashboard:
-    - Build command: `npm install`
-    - Start command: `npm start`
-4. Use a PostgreSQL add-on from Render or an external database service
+```ini
+[Unit]
+Description=ineedquotebot Telegram bot
+After=network-online.target postgresql.service
+Wants=network-online.target postgresql.service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/ineedquotebot
+EnvironmentFile=/home/ubuntu/ineedquotebot/.env
+ExecStart=/usr/bin/node index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. Start it and follow the logs:
+
+```bash
+sudo systemctl enable --now ineedquotebot
+journalctl -u ineedquotebot -f
+```
+
+Only run one instance per bot token; two pollers on the same token cause `409 Conflict`.
 
 ## Contributing
 

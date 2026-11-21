@@ -17,8 +17,9 @@ function initializeServer(port = process.env.PORT || 3000) {
         res.send("🧠 I Need Quote bot is alive and running.");
     });
 
-    app.listen(port, () => {
-        console.log(`✅ Web server running on port ${port}`);
+    const host = process.env.HOST || "127.0.0.1";
+    app.listen(port, host, () => {
+        console.log(`✅ Web server running on ${host}:${port}`);
     });
 
     return app;
