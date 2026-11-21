@@ -46,14 +46,14 @@ function initializeAdminCommands(bot, adminChatId) {
      * @command : /broadcast
      * @description : Broadcast a message to all subscribers
      * @admin : Only accessible by admin
-     * @usage : /broadcast Your message here
+     * @usage : /broadcast Your message here (multi-line supported)
      */
-    bot.onText(new RegExp(`^${broadcast} (.+)$`), async (msg, match) => {
+    bot.onText(new RegExp(`^${broadcast}(?:@\\w+)?\\s+([\\s\\S]+)$`), async (msg, match) => {
         if (msg.chat.id.toString() !== adminChatId.toString()) {
             return;
         }
 
-        const broadcastMessage = match[1];
+        const broadcastMessage = match[1].trim();
 
         try {
             bot.sendMessage(msg.chat.id, "🔄 Broadcasting message to all subscribers...");

@@ -1,6 +1,5 @@
 const {
-    generalCommands,
-    adminCommands,
+    isKnownCommand,
     todayQuote,
     randomQuote,
     subscribe: subscribeCommand,
@@ -104,7 +103,7 @@ function initializeCommands(bot) {
         const date = new Date();
         console.log("Message received on", date.toISOString(), "from", msg.from.username || msg.from.id);
         // Ignore messages that are actually available commands
-        if (generalCommands.includes(msg.text) || adminCommands.includes(msg.text)) return;
+        if (isKnownCommand(msg.text)) return;
         if (msg.chat.id == process.env.TL_ADMIN_CHAT_ID) {
             bot.sendMessage(msg.chat.id, commandInstructionsAdmin);
         } else {
