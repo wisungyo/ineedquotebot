@@ -1,4 +1,4 @@
-const { getActiveSubscribers } = require("./dbService");
+const { getActiveSubscribers, getDailyQuote, saveDailyQuote, getRecentDailyQuoteTexts } = require("./dbService");
 const { handleDeliveryFailure } = require("../utils/deliveryFailure");
 const quotesFilePath = "./src/constants/quotes.json";
 const axios = require("axios");
@@ -156,8 +156,7 @@ function initScheduledQuotes(bot) {
         process.env.CRON_DAILY_QUOTE,
         async () => {
             try {
-                const quote = await getQuote("today");
-                todayQuote = quote;
+                const quote = await getTodayQuote();
 
                 const subscribers = await getActiveSubscribers();
                 if (subscribers.length > 0) {
@@ -188,16 +187,74 @@ function initScheduledQuotes(bot) {
     );
 }
 
-async function setTodayQuote() {
-    try {
-        todayQuote = await getQuote("today");
-    } catch (error) {
-        console.error("Error setting today's quote:", error);
+/** How many past days a quote of the day must not repeat from */
+const NO_REPEAT_DAYS = 30;
+
+const normalize = (text = "") => String(text).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * Pick a local quote whose text is not in the excluded set
+ * @param {Set<String>} excluded - normalized texts
+ * @param {String} dateKey
+ */
+function pickLocalQuote(excluded, dateKey) {
+    const quotesData = JSON.parse(fs.readFileSync(quotesFilePath));
+    for (let i = 0; i < 50; i++) {
+        const pick = quotesData[Math.floor(Math.random() * quotesData.length)];
+        if (pick && pick.quoteText && !excluded.has(normalize(pick.quoteText))) {
+            return { text: pick.quoteText, author: pick.quoteAuthor || "Unknown", source: "local", dateKey };
+        }
     }
+    const pick = quotesData.find((q) => q.quoteText && !excluded.has(normalize(q.quoteText))) || quotesData[0];
+    return { text: pick.quoteText, author: pick.quoteAuthor || "Unknown", source: "local", dateKey };
 }
 
 /**
- * Get the cached quote of the day, refreshing it when the date changes
+ * Decide the quote of the day for a date: reuse the stored one, otherwise pick a quote
+ * that wasn't used in the last NO_REPEAT_DAYS days and store it.
+ * @param {String} dateKey - YYYY-MM-DD (Asia/Jakarta)
+ */
+async function resolveDailyQuote(dateKey) {
+    const stored = await getDailyQuote(dateKey);
+    if (stored) return stored;
+
+    const excluded = new Set((await getRecentDailyQuoteTexts(dateKey, NO_REPEAT_DAYS)).map(normalize));
+    let quote = await getQuote("today");
+    if (excluded.has(normalize(quote.text))) {
+        console.log(`Quote of the day repeats a recent one ("${quote.text.slice(0, 40)}..."), picking another`);
+        quote = pickLocalQuote(excluded, dateKey);
+    }
+    quote.dateKey = dateKey;
+    return saveDailyQuote(quote);
+}
+
+/** in-flight refresh, so concurrent requests share one pick */
+let pendingToday = null;
+
+async function setTodayQuote() {
+    const { key } = jakartaDate();
+    if (pendingToday && pendingToday.key === key) return pendingToday.promise;
+    const promise = (async () => {
+        try {
+            todayQuote = await resolveDailyQuote(key);
+        } catch (error) {
+            // DB unavailable: still serve something, avoiding at least yesterday's in-memory quote
+            console.error("Error setting today's quote:", error.message);
+            const excluded = new Set(todayQuote ? [normalize(todayQuote.text)] : []);
+            let quote = await getQuote("today");
+            if (excluded.has(normalize(quote.text))) quote = pickLocalQuote(excluded, key);
+            todayQuote = { ...quote, dateKey: key };
+        } finally {
+            pendingToday = null;
+        }
+        return todayQuote;
+    })();
+    pendingToday = { key, promise };
+    return promise;
+}
+
+/**
+ * Get the quote of the day, refreshing it when the date changes
  * @returns {Promise<Object>}
  */
 async function getTodayQuote() {

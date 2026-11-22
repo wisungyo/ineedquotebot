@@ -7,6 +7,7 @@ const { initializeCommands } = require("./src/commands/botCommands");
 const { initializeInlineMode } = require("./src/services/inlineService");
 const { initializeServer } = require("./src/services/serverService");
 const { commandMenus } = require("./src/constants/commands");
+const { initializeConnection } = require("./src/services/dbService");
 
 const token = process.env.TL_TOKEN;
 const adminChatId = process.env.TL_ADMIN_CHAT_ID;
@@ -24,7 +25,10 @@ initializeAdminCommands(bot, adminChatId);
 initializeInlineMode(bot);
 
 initScheduledQuotes(bot, adminChatId);
-setTodayQuote();
+// pick today's quote once the DB schema (daily_quotes) is ready
+initializeConnection()
+    .catch(() => {})
+    .then(() => setTodayQuote());
 
 /**
  * Keep the command menus in Telegram in sync with the code

@@ -11,7 +11,18 @@ pool.on("error", (err) => {
  * Initialize the database connection, ensure schema exists, and test it
  * @returns {Promise<void>}
  */
-async function initializeConnection() {
+let initPromise = null;
+function initializeConnection() {
+    if (!initPromise) {
+        initPromise = runInitialization().catch((error) => {
+            initPromise = null; // allow a retry later
+            throw error;
+        });
+    }
+    return initPromise;
+}
+
+async function runInitialization() {
     try {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS subscribers (
@@ -28,6 +39,16 @@ async function initializeConnection() {
         // v2: groups support
         await pool.query(`ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS chat_type TEXT NOT NULL DEFAULT 'private'`);
         await pool.query(`ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS chat_title TEXT`);
+        // v3: persisted quote of the day (no repeats across days, stable across restarts)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS daily_quotes (
+                date_key   DATE PRIMARY KEY,
+                text       TEXT NOT NULL,
+                author     TEXT NOT NULL,
+                source     TEXT NOT NULL,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        `);
         await pool.query("SELECT 1 FROM subscribers LIMIT 1");
         console.log("✅ Successfully connected to PostgreSQL database");
     } catch (error) {
@@ -164,8 +185,52 @@ async function migrateChatId(oldChatId, newChatId) {
     }
 }
 
+/**
+ * Get the stored quote of the day for a date
+ * @param {String} dateKey - YYYY-MM-DD
+ * @returns {Promise<Object|null>} { text, author, source, dateKey }
+ */
+async function getDailyQuote(dateKey) {
+    const { rows } = await pool.query(
+        `SELECT to_char(date_key, 'YYYY-MM-DD') AS "dateKey", text, author, source FROM daily_quotes WHERE date_key = $1`,
+        [dateKey]
+    );
+    return rows[0] || null;
+}
+
+/**
+ * Store the quote of the day; if another call already stored one for this date, keep that one
+ * @param {Object} quote - { text, author, source, dateKey }
+ * @returns {Promise<Object>} the quote actually stored for the date
+ */
+async function saveDailyQuote(quote) {
+    await pool.query(
+        `INSERT INTO daily_quotes (date_key, text, author, source) VALUES ($1, $2, $3, $4)
+         ON CONFLICT (date_key) DO NOTHING`,
+        [quote.dateKey, quote.text, quote.author, quote.source]
+    );
+    return (await getDailyQuote(quote.dateKey)) || quote;
+}
+
+/**
+ * Quote texts used as quote of the day in the days before a date
+ * @param {String} dateKey - YYYY-MM-DD (excluded)
+ * @param {Number} days - how far back to look
+ * @returns {Promise<String[]>}
+ */
+async function getRecentDailyQuoteTexts(dateKey, days = 30) {
+    const { rows } = await pool.query(
+        `SELECT text FROM daily_quotes WHERE date_key < $1 AND date_key >= $1::date - $2::int`,
+        [dateKey, days]
+    );
+    return rows.map((r) => r.text);
+}
+
 module.exports = {
     initializeConnection,
+    getDailyQuote,
+    saveDailyQuote,
+    getRecentDailyQuoteTexts,
     migrateChatId,
     subscribe,
     unsubscribe,
