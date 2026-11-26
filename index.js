@@ -1,3 +1,9 @@
+// Network: this VPS has no IPv6 route and Telegram is ~300-800ms away. Node's "happy eyeballs"
+// gives each address only 250ms, so connections to api.telegram.org randomly fail (EFATAL AggregateError).
+// Prefer IPv4 and don't race address families.
+require("dns").setDefaultResultOrder("ipv4first");
+require("net").setDefaultAutoSelectFamily(false);
+
 const TelegramBot = require("node-telegram-bot-api");
 require("dotenv").config();
 
